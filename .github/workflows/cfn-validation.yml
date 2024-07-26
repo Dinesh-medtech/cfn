@@ -27,4 +27,4 @@ jobs:
 
     - name: Validate CloudFormation template
       run: |
-        sam validate --template cfn-template.yaml
+        sam validate --template cfn-template.yml

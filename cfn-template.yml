@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for Various AWS Services
+
+Resources:
+  # Lambda Function
+  MyLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'MyLambdaFunction'
+      Handler: 'index.handler'
+      Role: !GetAtt MyLambdaExecutionRole.Arn
+      Code:
+        S3Bucket: 'your-s3-bucket-name'
+        S3Key: 'your-lambda-code.zip'
+      Runtime: 'nodejs14.x'
+      MemorySize: 128
+      Timeout: 30
+
+  # Lambda Execution Role
+  MyLambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'LambdaExecutionPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:*'
+                  - 's3:*'
+                Resource: '*'
+
+  # CloudWatch Log Group
+  MyLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: '/aws/lambda/MyLambdaFunction'
+      RetentionInDays: 14
+
+  # Security Group
+  MySecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'My security group'
+      VpcId: 'vpc-12345678'
+
+  # WAF Web ACL
+  MyWebACL:
+    Type: 'AWS::WAFv2::WebACL'
+    Properties:
+      Scope: 'REGIONAL'
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: 'webACL'
+      Rules: []
+
+  # API Gateway
+  MyApiGateway:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: 'MyApiGateway'
+      Description: 'API Gateway for my application'
+
+  # S3 Bucket
+  MyS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'my-s3-bucket-name'
+
+  # Step Function
+  MyStepFunction:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      DefinitionString: '{"Comment": "A Hello World example of the Amazon States Language using Pass states","StartAt": "HelloWorld","States": {"HelloWorld": {"Type": "Pass","Result": "Hello, World!","End": true}}}'
+      RoleArn: !GetAtt MyStepFunctionRole.Arn
+
+  # Step Function Execution Role
+  MyStepFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'states.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'StepFunctionExecutionPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'lambda:InvokeFunction'
+                  - 'states:StartExecution'
+                Resource: '*'
+
+  # Secrets Manager Secret
+  MySecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: 'MySecret'
+      Description: 'My secret'
+      SecretString: '{"username":"admin","password":"password"}'
+
+  # Systems Manager Parameter Store
+  MyParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/my/application/parameter'
+      Type: 'String'
+      Value: 'parameter-value'
+
+  # EventBridge Event Bus
+  MyEventBus:
+    Type: 'AWS::Events::EventBus'
+    Properties:
+      Name: 'MyEventBus'
+
+  # EventBridge Rule
+  MyEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: 'MyEventRule'
+      EventPattern:
+        source:
+          - 'aws.ec2'
+        detail-type:
+          - 'EC2 Instance State-change Notification'
+      State: 'ENABLED'
+      Targets:
+        - Arn: !GetAtt MyLambdaFunction.Arn
+          Id: 'TargetFunctionV1'
+
+  # SQS Queue
+  MyQueue:
+    Type: 'AWS::SQS::Queue'
+    Properties:
+      QueueName: 'MyQueue'
